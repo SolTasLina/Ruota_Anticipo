@@ -1,0 +1,216 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+  <meta charset="UTF-8">
+  <title>Ruota anticipo contratti</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      margin: 30px 10px;
+      text-align: center;
+    }
+
+    h1 {
+      margin-bottom: 5px;
+    }
+
+    #subtitle {
+      max-width: 500px;
+      font-size: 14px;
+      margin-bottom: 25px;
+    }
+
+    #wheel-container {
+      position: relative;
+      width: 350px;
+      height: 350px;
+      margin-bottom: 25px;
+    }
+
+    #wheel-bg {
+      position: absolute;
+      inset: 0;
+      border-radius: 50%;
+      background: conic-gradient(
+        #ffd6d6 0deg 30deg,
+        #d6e8ff 30deg 60deg,
+        #ffd6d6 60deg 90deg,
+        #d6e8ff 90deg 120deg,
+        #ffd6d6 120deg 150deg,
+        #d6e8ff 150deg 180deg,
+        #ffd6d6 180deg 210deg,
+        #d6e8ff 210deg 240deg,
+        #ffd6d6 240deg 270deg,
+        #d6e8ff 270deg 300deg,
+        #ffd6d6 300deg 330deg,
+        #d6e8ff 330deg 360deg
+      );
+      border: 6px solid #444;
+      box-sizing: border-box;
+    }
+
+    #pointer {
+      position: absolute;
+      top: -18px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 0;
+      height: 0;
+      border-left: 14px solid transparent;
+      border-right: 14px solid transparent;
+      border-bottom: 24px solid #e53935;
+    }
+
+    .product-btn {
+      position: absolute;
+      left: 50%;
+      top: 50%;
+      transform-origin: center center;
+      background: rgba(255,255,255,0.9);
+      padding: 3px 6px;
+      border-radius: 12px;
+      font-size: 12px;
+      border: 1px solid #888;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: transform 0.15s ease, background 0.15s ease;
+      transform: translate(-50%, -50%);
+    }
+
+    .product-btn:hover {
+      background: #fffbe6;
+      transform: scale(1.05) translate(-50%, -50%);
+    }
+
+    .product-btn.active {
+      background: #ffe082;
+      font-weight: bold;
+      border-color: #f9a825;
+    }
+
+    #result {
+      font-size: 18px;
+      font-weight: bold;
+      margin-bottom: 8px;
+    }
+
+    #result small {
+      display: block;
+      font-size: 13px;
+      font-weight: normal;
+      margin-top: 3px;
+    }
+
+    #fallback {
+      margin-top: 20px;
+      font-size: 14px;
+    }
+
+    #selectProd {
+      margin-top: 6px;
+      padding: 4px 8px;
+      font-size: 14px;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Ruota anticipo contratti</h1>
+  <div id="subtitle">
+    Clicca sul prodotto sulla ruota (oppure scegli dal menu sotto)
+    per vedere il valore minimo della <strong>1ª rata (anticipo)</strong>.
+  </div>
+
+  <div id="wheel-container">
+    <div id="wheel-bg"></div>
+    <div id="pointer"></div>
+  </div>
+
+  <div id="result">Seleziona un prodotto dalla ruota</div>
+
+  <div id="fallback">
+    Oppure scegli qui:<br>
+    <select id="selectProd">
+      <option value="">-- Seleziona prodotto --</option>
+    </select>
+  </div>
+
+  <script>
+    const products = [
+      { name: "CU 3000", rate: "€ 1.260" },
+      { name: "CUE 4500", rate: "€ 1.850" },
+      { name: "TU 5000", rate: "€ 2.200" },
+      { name: "TUE 6500", rate: "€ 2.750" },
+      { name: "TU 7500", rate: "€ 3.100" },
+      { name: "TUE 9000", rate: "€ 3.650" },
+      { name: "TU 10000", rate: "€ 4.050" },
+      { name: "TUE 11500", rate: "€ 4.600" },
+      { name: "TU 14000", rate: "€ 5.500" },
+      { name: "TUE 15500", rate: "€ 6.050" },
+      { name: "TU 18000", rate: "€ 7.000" },
+      { name: "TUE 19500", rate: "€ 7.500" }
+    ];
+
+    const wheelContainer = document.getElementById("wheel-container");
+    const result = document.getElementById("result");
+    const selectProd = document.getElementById("selectProd");
+
+    const radius = 140;
+    const centerX = 175;
+    const centerY = 175;
+    const angleStep = 360 / products.length;
+    let activeBtn = null;
+
+    products.forEach((p, index) => {
+      const angleDeg = -90 + index * angleStep;
+      const angleRad = angleDeg * Math.PI / 180;
+      const x = centerX + radius * Math.cos(angleRad);
+      const y = centerY + radius * Math.sin(angleRad);
+
+      const btn = document.createElement("button");
+      btn.className = "product-btn";
+      btn.textContent = p.name;
+      btn.style.left = x + "px";
+      btn.style.top = y + "px";
+
+      btn.addEventListener("click", () => {
+        selectProduct(index, btn);
+        selectProd.value = String(index);
+      });
+
+      wheelContainer.appendChild(btn);
+
+      const opt = document.createElement("option");
+      opt.value = index;
+      opt.textContent = p.name;
+      selectProd.appendChild(opt);
+    });
+
+    selectProd.addEventListener("change", () => {
+      if (selectProd.value === "") return;
+      const idx = parseInt(selectProd.value, 10);
+      const btns = document.querySelectorAll(".product-btn");
+      selectProduct(idx, btns[idx]);
+    });
+
+    function selectProduct(index, buttonEl) {
+      const p = products[index];
+
+      if (activeBtn) {
+        activeBtn.classList.remove("active");
+      }
+      activeBtn = buttonEl;
+      activeBtn.classList.add("active");
+
+      result.innerHTML =
+        "Prodotto: <strong>" + p.name + "</strong> — Anticipo minimo 1ª rata: <strong>" + p.rate + "</strong>" +
+        "<small>(dati da tabella interna contratti)</small>";
+    }
+  </script>
+</body>
+</html>
